@@ -16,13 +16,11 @@ start:
 step2:
   cli ; clear interrupts
   mov ax, 0x00
-  mov ds,ax
-  mov es,ax
+  mov ds, ax
+  mov es, ax
   mov ss, ax
   mov sp, 0x7c00
   sti ; Enables interrupts
-
-  jmp $
 
 .load_protected:
   cli
@@ -67,9 +65,9 @@ load32:
   mov es, ax
   mov fs, ax
   mov gs, ax
-  mob ss, ax
-  mov ebp, 0x002000000
-  mov exp, ebp
+  mov ss, ax
+  mov ebp, 0x00200000
+  mov esp, ebp
   jmp $
 
 times 510-($ - $$) db 0
