@@ -60,20 +60,66 @@ gdt_descriptor:
 
 [BITS 32]
 load32:
-  mov ax, DATA_SEG
-  mov ds, ax
-  mov es, ax
-  mov fs, ax
-  mov gs, ax
-  mov ss, ax
-  mov ebp, 0x00200000
-  mov esp, ebp
+  mov eax, 1
+  mov ecx, 100
+  mov edi, 0x0100000
+  call ata_lib_read
+  jmp CODE_SEG: 0x0100000
 
-  ; enable a20 line
-  in al, 0x92
-  or al, 2
-  out 0x92, al
-  jmp $
+ata_lib_read:
+  mov ebx, eax,
+  shr eax, 24
+  or eax, 0xe0
+  mov dx, 0x1f6
+  out dx, al
+  ; finisges sending highest 8bit
+  mov eax, ecx
+  mov dx, 0x1f2
+  out dx, al
+
+  ;send more bits to the lba
+  mov eax, ebx
+  mov dx, 0x1f3
+  out dx, al
+  ;finshed sending
+
+  ;send more bits to the lba
+  mov dx, 0x1f4
+  mov eax, ebx
+  shr eax, 8
+  out dx, al
+  ;finshed sending
+
+  ;sending upper 16 bit
+  mov dx, 0x1f5
+  mov eax, ebx
+  shr eax, 16
+  out dx, al
+  ;finshed sending
+  
+  mov dx, 0x1f7
+  mov al, 0x20
+  out dx, al
+
+  ;read all sectors into the memory
+.next_sector:
+  push ecx
+
+; check if we need to read
+.try_again:
+  mov dx, 0x1f7
+  in al, dx
+  test al, 8
+  jz .try_again
+
+; we need to read 256 words atr a tiem
+  mov ecx, 256
+  mov dx, 0x1f0
+  rep insw
+  pop ecx
+  loop .next_sector
+  ; end of reading sector
+  ret
 
 times 510-($ - $$) db 0
 dw 0xAA55
