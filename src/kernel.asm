@@ -31,8 +31,6 @@ mov al, 00000001b
 out 0x21, al
 ;End master pic
 
-sti ;enable interrupts
-
 call kernel_main
 
 jmp $

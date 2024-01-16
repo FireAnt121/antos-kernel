@@ -1,6 +1,7 @@
 #include "kernel.h"
 #include "idt/idt.h"
 #include "io/io.h"
+#include "memory/heap/kheap.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -57,7 +58,18 @@ void print(const char *str) {
 void kernel_main() {
   term_init();
   print("hellow eorlf fdsfds fds \n fds fds fdsf ds f dsf dsf  dsf");
+  // Initialze hte heap
+  kheap_init();
+  // Initialze hte interrupt descriptor table
   idt_init();
 
-  outb(0x60, 0xff);
+  enable_interrupts();
+  void *ptr = kmalloc(50);
+  // void *ptr2 = kmalloc(5000);
+  // void *ptr3 = kmalloc(5600);
+  // kfree(ptr);
+  // void *ptr4 = kmalloc(50);
+  // if (ptr || ptr2 || ptr3 || ptr4) {
+  if (ptr) {
+  }
 }
