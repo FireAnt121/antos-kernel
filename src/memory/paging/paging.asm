@@ -8,8 +8,8 @@ global enable_paging
 paging_load_directory:
 push ebp
 mov ebp, esp
-mov eax, [ ebp + 8 ]
-mov cr3, eax; cr3
+mov eax, [ebp+8]
+mov cr3, eax
 pop ebp
 ret
 

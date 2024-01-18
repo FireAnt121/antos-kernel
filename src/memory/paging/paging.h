@@ -1,6 +1,7 @@
 #ifndef PAGING_H
 #define PAGING_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -21,5 +22,7 @@ struct paging_4gb_chunk *paging_new_4gb(uint8_t flags);
 uint32_t *paging_4gb_chunk_get_directory(struct paging_4gb_chunk *chunk);
 void paging_switch(uint32_t *directory);
 void enable_paging();
+int paging_set(uint32_t *directory, void *virt, uint32_t val);
+bool is_paging_aligned(void *addr);
 
 #endif
