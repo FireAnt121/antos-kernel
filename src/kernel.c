@@ -2,6 +2,7 @@
 #include "idt/idt.h"
 #include "io/io.h"
 #include "memory/heap/kheap.h"
+#include "memory/paging/paging.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -55,6 +56,8 @@ void print(const char *str) {
     term_writechar(str[i], 15);
   }
 }
+
+static struct paging_4gb_chunk *kernel_chunk = 0;
 void kernel_main() {
   term_init();
   print("hellow eorlf fdsfds fds \n fds fds fdsf ds f dsf dsf  dsf");
@@ -62,7 +65,14 @@ void kernel_main() {
   kheap_init();
   // Initialze hte interrupt descriptor table
   idt_init();
+  // setup paging
+  kernel_chunk = paging_new_4gb(PAGING_IS_WRITABLE | PAGING_IS_PRESENT |
+                                PAGING_ACCESS_FROM_ALL);
 
+  //  switch to paging kernel chunk
+  paging_switch(paging_4gb_chunk_get_directory(kernel_chunk));
+
+  enable_paging();
   enable_interrupts();
   void *ptr = kmalloc(50);
   // void *ptr2 = kmalloc(5000);
