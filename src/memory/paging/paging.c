@@ -1,10 +1,34 @@
 #include "./paging.h"
 #include "../../memory/heap/kheap.h"
 #include "../../status.h"
-#include <stdint.h>
 
 void paging_load_directory(uint32_t *directory);
 static uint32_t *current_directory = 0;
+
+uint32_t *paging_4gb_chunk_get_directory(struct paging_4gb_chunk *chunk) {
+  return chunk->directory_entry;
+}
+
+bool is_paging_aligned(void *addr) {
+  return ((uint32_t)addr % PAGING_PAGE_SIZE) == 0;
+}
+
+int get_paging_indexes(void *virtual_address, uint32_t *directory_index_out,
+                       uint32_t *table_index_out) {
+  int res = 0;
+  if (!is_paging_aligned(virtual_address)) {
+    res = -EINVARG;
+    goto out;
+  }
+
+  *directory_index_out = ((uint32_t)virtual_address /
+                          (PAGING_TOTAL_ENTRIES_PER_TABLE * PAGING_PAGE_SIZE));
+  *table_index_out =
+      ((uint32_t)virtual_address %
+       (PAGING_TOTAL_ENTRIES_PER_TABLE * PAGING_PAGE_SIZE) / PAGING_PAGE_SIZE);
+out:
+  return res;
+}
 // linear virtual = physical
 // not the acutal paging just a representation
 struct paging_4gb_chunk *paging_new_4gb(uint8_t flags) {
@@ -30,30 +54,6 @@ void paging_switch(uint32_t *directory) {
   current_directory = directory;
 }
 
-uint32_t *paging_4gb_chunk_get_directory(struct paging_4gb_chunk *chunk) {
-  return chunk->directory_entry;
-}
-
-bool is_paging_aligned(void *addr) {
-  return ((uint32_t)addr % PAGING_PAGE_SIZE) == 0;
-}
-
-int get_paging_indexes(void *virtual_address, uint32_t *directory_index_out,
-                       uint32_t *table_index_out) {
-  int res = 0;
-  if (is_paging_aligned(virtual_address)) {
-    res = -EINVARG;
-    goto out;
-  }
-
-  *directory_index_out = ((uint32_t)virtual_address /
-                          (PAGING_TOTAL_ENTRIES_PER_TABLE * PAGING_PAGE_SIZE));
-  *table_index_out = ((uint32_t)virtual_address %
-                      (PAGING_TOTAL_ENTRIES_PER_TABLE * PAGING_PAGE_SIZE));
-out:
-  return res;
-}
-
 int paging_set(uint32_t *directory, void *virt, uint32_t val) {
   if (!is_paging_aligned(virt)) {
     return -EINVARG;
@@ -67,7 +67,7 @@ int paging_set(uint32_t *directory, void *virt, uint32_t val) {
   }
 
   uint32_t entry = directory[directory_index];
-  uint32_t *table = (uint32_t *)(entry * 0xfffff000);
+  uint32_t *table = (uint32_t *)(entry & 0xfffff000);
   table[table_index] = val;
   // ERROR: return erro
   return 0;
